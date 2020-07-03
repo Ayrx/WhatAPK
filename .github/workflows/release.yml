@@ -1,0 +1,20 @@
+name: Upload to release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Upload to release
+    runs-on: ubuntu-latest
+    container:
+      image: clux/muslrust
+      volumes:
+        - $PWD:/volume
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
