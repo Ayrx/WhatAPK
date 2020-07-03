@@ -18,3 +18,11 @@ jobs:
           use-cross: true
           command: build
           args: --release --target x86_64-unknown-linux-musl
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: target/x86_64-unknown-linux-musl/release/whatapk
+          asset_name: whatapk_x86_64
+          asset_content_type: application/octet-stream
