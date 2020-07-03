@@ -11,7 +11,7 @@ jobs:
     container:
       image: clux/muslrust
       volumes:
-        - ${{env.GITHUB_WORKSPACE}}:/volume
+        - ${{github.workspace}}:/volume
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/cargo@v1
