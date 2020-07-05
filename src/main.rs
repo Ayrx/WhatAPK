@@ -28,24 +28,46 @@ fn main() -> Result<()> {
     let zip = ZipArchive::new(fr)?;
 
     let files: HashSet<String> = zip.file_names().map(|x| x.to_owned()).collect();
-    run_checks(files)?;
+    let results = run_checks(files)?;
+
+    for r in results {
+        r.print_results();
+    }
 
     Ok(())
 }
 
-fn run_checks(files: HashSet<String>) -> Result<()> {
-    rules::vkey::check(&files);
-    rules::reactnative::check(&files);
-    rules::kony::check(&files);
-    Ok(())
+fn run_checks(files: HashSet<String>) -> Result<Vec<CheckResults>> {
+    let mut results = Vec::new();
+
+    if let Some(c) = rules::vkey::check(&files) {
+        results.push(c);
+    }
+
+    if let Some(c) = rules::reactnative::check(&files) {
+        results.push(c);
+    }
+
+    if let Some(c) = rules::kony::check(&files) {
+        results.push(c);
+    }
+
+    Ok(results)
 }
 
-fn print_match(match_name: &str, matches: Vec<&String>) {
-    println!("========================================");
-    println!("[+] {} detected", match_name);
+pub struct CheckResults {
+    pub name: String,
+    pub matches: Vec<String>,
+}
 
-    println!("[+] Files:");
-    for m in &matches {
-        println!("{}", m);
+impl CheckResults {
+    fn print_results(self) {
+        println!("========================================");
+        println!("[+] {} detected", self.name);
+
+        println!("[+] Files:");
+        for m in &self.matches {
+            println!("{}", m);
+        }
     }
 }
