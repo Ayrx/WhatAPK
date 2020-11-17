@@ -66,6 +66,10 @@ fn run_checks(files: HashSet<String>) -> Result<Vec<CheckResults>> {
         results.push(c);
     }
 
+    if let Some(c) = rules::rootbeer::check(&files) {
+        results.push(c);
+    }
+
     Ok(results)
 }
 
