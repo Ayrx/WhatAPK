@@ -70,6 +70,10 @@ fn run_checks(files: HashSet<String>) -> Result<Vec<CheckResults>> {
         results.push(c);
     }
 
+    if let Some(c) = rules::cordova::check(&files) {
+        results.push(c);
+    }
+
     Ok(results)
 }
 
