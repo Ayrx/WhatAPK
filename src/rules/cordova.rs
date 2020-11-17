@@ -2,11 +2,8 @@ use regex::RegexSet;
 use std::collections::HashSet;
 
 pub fn check(f: &HashSet<String>) -> Option<crate::CheckResults> {
-    let re = RegexSet::new(&[
-        r"assets/www/cordova\.js",
-        r"assets/www/cordova_plugins\.js",
-    ])
-    .unwrap();
+    let re =
+        RegexSet::new(&[r"assets/www/cordova\.js", r"assets/www/cordova_plugins\.js"]).unwrap();
 
     let mut matches = Vec::new();
 

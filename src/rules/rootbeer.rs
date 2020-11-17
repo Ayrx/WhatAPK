@@ -2,10 +2,7 @@ use regex::RegexSet;
 use std::collections::HashSet;
 
 pub fn check(f: &HashSet<String>) -> Option<crate::CheckResults> {
-    let re = RegexSet::new(&[
-        r"lib/.*/libtool-checker.so",
-    ])
-    .unwrap();
+    let re = RegexSet::new(&[r"lib/.*/libtool-checker.so"]).unwrap();
 
     let mut matches = Vec::new();
 
