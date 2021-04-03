@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Read;
 use zip::read::ZipArchive;
 
+mod android_manifest;
 mod rules;
 
 fn main() -> Result<()> {
@@ -34,10 +36,23 @@ fn main() -> Result<()> {
     let f = File::open(apk)?;
     let fr = BufReader::new(f);
 
-    let zip = ZipArchive::new(fr)?;
+    let mut zip = ZipArchive::new(fr)?;
+
+    {
+        let mut resources_file = Vec::new();
+        let mut manifest_file = Vec::new();
+
+        zip.by_name("resources.arsc")?
+            .read_to_end(&mut resources_file)?;
+        zip.by_name("AndroidManifest.xml")?
+            .read_to_end(&mut manifest_file)?;
+
+        let manifest = android_manifest::AndroidManifest::parse(&resources_file, &manifest_file)?;
+        manifest.print();
+    }
 
     let files: HashSet<String> = zip.file_names().map(|x| x.to_owned()).collect();
-    let results = run_checks(files)?;
+    let results = run_checks(files);
 
     for r in &results {
         r.print_results();
@@ -51,7 +66,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_checks(files: HashSet<String>) -> Result<Vec<CheckResults>> {
+fn run_checks(files: HashSet<String>) -> Vec<CheckResults> {
     let mut results = Vec::new();
 
     if let Some(c) = rules::vkey::check(&files) {
@@ -78,7 +93,7 @@ fn run_checks(files: HashSet<String>) -> Result<Vec<CheckResults>> {
         results.push(c);
     }
 
-    Ok(results)
+    results
 }
 
 #[derive(Serialize, Deserialize)]
