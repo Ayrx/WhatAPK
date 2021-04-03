@@ -65,6 +65,7 @@ impl AndroidManifest {
 }
 
 #[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Display, EnumString)]
 pub enum Permission {
     ACCEPT_HANDOVER,
