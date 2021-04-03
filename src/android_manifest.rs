@@ -8,6 +8,10 @@ pub struct AndroidManifest {
     pub package_name: String,
     pub permissions: Vec<Permission>,
     pub api_level: u8,
+    pub activities: Vec<String>,
+    pub services: Vec<String>,
+    pub receivers: Vec<String>,
+    pub providers: Vec<String>,
 }
 
 impl AndroidManifest {
@@ -38,10 +42,29 @@ impl AndroidManifest {
             })?
             .parse::<u8>()?;
 
+        let mut activities = Vec::new();
         let mut permissions = Vec::new();
+        let mut services = Vec::new();
+        let mut receivers = Vec::new();
+        let mut providers = Vec::new();
+
         for child in root.get_children() {
-            if child.get_tag().get_name().as_str() == "uses-permission" {
+            let name = child.get_tag().get_name();
+            if name.as_str() == "uses-permission" {
                 permissions.push(Self::parse_permissions(child)?);
+            } else if name.as_str() == "application" {
+                for c in child.get_children() {
+                    let name = c.get_tag().get_name();
+                    if name.as_str() == "activity" {
+                        activities.push(Self::parse_activity(c)?);
+                    } else if name.as_str() == "service" {
+                        services.push(Self::parse_service(c)?);
+                    } else if name.as_str() == "receiver" {
+                        receivers.push(Self::parse_receiver(c)?);
+                    } else if name.as_str() == "provider" {
+                        providers.push(Self::parse_provider(c)?);
+                    }
+                }
             }
         }
 
@@ -49,6 +72,10 @@ impl AndroidManifest {
             package_name,
             permissions,
             api_level,
+            activities,
+            services,
+            receivers,
+            providers,
         })
     }
 
@@ -62,14 +89,66 @@ impl AndroidManifest {
             .ok_or_else(|| anyhow!("unrecognized permission: {}", permission))
     }
 
+    fn parse_activity(element: &Element) -> Result<String> {
+        Ok(element
+            .get_attributes()
+            .get("android:name")
+            .ok_or_else(|| anyhow!("AndroidManifest: malformed `activity` element"))?
+            .to_owned())
+    }
+
+    fn parse_service(element: &Element) -> Result<String> {
+        Ok(element
+            .get_attributes()
+            .get("android:name")
+            .ok_or_else(|| anyhow!("AndroidManifest: malformed `service` element"))?
+            .to_owned())
+    }
+
+    fn parse_receiver(element: &Element) -> Result<String> {
+        Ok(element
+            .get_attributes()
+            .get("android:name")
+            .ok_or_else(|| anyhow!("AndroidManifest: malformed `receiver` element"))?
+            .to_owned())
+    }
+
+    fn parse_provider(element: &Element) -> Result<String> {
+        Ok(element
+            .get_attributes()
+            .get("android:name")
+            .ok_or_else(|| anyhow!("AndroidManifest: malformed `provider` element"))?
+            .to_owned())
+    }
+
     pub fn print(&self) {
         println!("========================================");
         println!("[+] Package: {}", self.package_name);
         println!("[+] API level: {}", self.api_level);
 
         println!("[+] Permissions:");
-        for m in &self.permissions {
-            println!("{}", m);
+        for i in &self.permissions {
+            println!("{}", i);
+        }
+
+        println!("[+] Activities:");
+        for i in &self.activities {
+            println!("{}", i);
+        }
+
+        println!("[+] Services:");
+        for i in &self.services {
+            println!("{}", i);
+        }
+
+        println!("[+] Receivers:");
+        for i in &self.receivers {
+            println!("{}", i);
+        }
+
+        println!("[+] Providers:");
+        for i in &self.providers {
+            println!("{}", i);
         }
     }
 }
