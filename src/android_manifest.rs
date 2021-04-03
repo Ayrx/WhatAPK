@@ -7,6 +7,7 @@ use strum_macros::{Display, EnumString};
 pub struct AndroidManifest {
     pub package_name: String,
     pub permissions: Vec<Permission>,
+    pub api_level: u8,
 }
 
 impl AndroidManifest {
@@ -30,6 +31,13 @@ impl AndroidManifest {
             .ok_or_else(|| anyhow!("AndroidManifest: missing `package` attribute"))?
             .to_owned();
 
+        let api_level = attr
+            .get("platformBuildVersionCode")
+            .ok_or_else(|| {
+                anyhow!("AndroidManifest: missing `platformBuildVersionCode` attribute")
+            })?
+            .parse::<u8>()?;
+
         let mut permissions = Vec::new();
         for child in root.get_children() {
             if child.get_tag().get_name().as_str() == "uses-permission" {
@@ -40,6 +48,7 @@ impl AndroidManifest {
         Ok(AndroidManifest {
             package_name,
             permissions,
+            api_level,
         })
     }
 
@@ -56,6 +65,7 @@ impl AndroidManifest {
     pub fn print(&self) {
         println!("========================================");
         println!("[+] Package: {}", self.package_name);
+        println!("[+] API level: {}", self.api_level);
 
         println!("[+] Permissions:");
         for m in &self.permissions {
