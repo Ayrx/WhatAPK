@@ -1,5 +1,7 @@
 use abxml::{decoder::Decoder, model::Element};
 use anyhow::{anyhow, ensure, Result};
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
@@ -51,7 +53,9 @@ impl AndroidManifest {
         for child in root.get_children() {
             let name = child.get_tag().get_name();
             if name.as_str() == "uses-permission" {
-                permissions.push(Self::parse_permissions(child)?);
+                if let Some(p) = Self::parse_permissions(child)? {
+                    permissions.push(p);
+                }
             } else if name.as_str() == "application" {
                 for c in child.get_children() {
                     let name = c.get_tag().get_name();
@@ -79,14 +83,13 @@ impl AndroidManifest {
         })
     }
 
-    fn parse_permissions(element: &Element) -> Result<Permission> {
+    fn parse_permissions(element: &Element) -> Result<Option<Permission>> {
         let permission = element
             .get_attributes()
             .get("android:name")
             .ok_or_else(|| anyhow!("AndroidManifest: malformed `uses-permission` element"))?;
 
-        Permission::from_manifest_string(permission)
-            .ok_or_else(|| anyhow!("unrecognized permission: {}", permission))
+        Ok(Permission::from_manifest_string(permission))
     }
 
     fn parse_activity(element: &Element) -> Result<String> {
@@ -334,7 +337,13 @@ pub enum Permission {
 
 impl Permission {
     pub fn from_manifest_string(s: &str) -> Option<Permission> {
-        let split: Vec<&str> = s.split('.').collect();
-        Self::from_str(split[2]).ok()
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"android\.permission\.([A-Z_]*)").unwrap();
+        }
+
+        match RE.captures(s) {
+            Some(m) => Self::from_str(m.get(1).unwrap().as_str()).ok(),
+            None => None,
+        }
     }
 }

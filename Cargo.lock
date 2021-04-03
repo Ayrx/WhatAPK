@@ -590,6 +590,7 @@ dependencies = [
  "abxml",
  "anyhow",
  "clap",
+ "lazy_static",
  "regex",
  "serde",
  "serde_json",
