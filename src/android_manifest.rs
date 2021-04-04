@@ -37,12 +37,12 @@ impl AndroidManifest {
             .ok_or_else(|| anyhow!("AndroidManifest: missing `package` attribute"))?
             .to_owned();
 
-        let api_level = attr
-            .get("platformBuildVersionCode")
-            .ok_or_else(|| {
-                anyhow!("AndroidManifest: missing `platformBuildVersionCode` attribute")
-            })?
-            .parse::<u8>()?;
+        let api_level = attr.get("platformBuildVersionCode").map_or(
+            Err(anyhow!(
+                "AndroidManifest: missing `platformBuildVersionCode` attribute"
+            )),
+            |i| Self::parse_api_level(i),
+        )?;
 
         let mut activities = Vec::new();
         let mut permissions = Vec::new();
@@ -81,6 +81,21 @@ impl AndroidManifest {
             receivers,
             providers,
         })
+    }
+
+    // This may not be necessary if the following gets resolved:
+    // https://github.com/SUPERAndroidAnalyzer/abxml-rs/issues/72
+    fn parse_api_level(s: &str) -> Result<u8> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"@flags:(\d*)").unwrap();
+        }
+
+        let i = match RE.captures(s) {
+            Some(m) => m.get(1).unwrap().as_str(),
+            None => s,
+        };
+
+        Ok(i.parse::<u8>()?)
     }
 
     fn parse_permissions(element: &Element) -> Result<Option<Permission>> {
