@@ -56,7 +56,7 @@ impl AndroidManifest {
                     if let Some(p) = Self::parse_permissions(child)? {
                         permissions.push(p);
                     }
-                },
+                }
                 "application" => {
                     for c in child.get_children() {
                         match c.get_tag().get_name().as_str() {
@@ -64,12 +64,11 @@ impl AndroidManifest {
                             "service" => services.push(Self::parse_service(c)?),
                             "receiver" => receivers.push(Self::parse_receiver(c)?),
                             "provider" => providers.push(Self::parse_provider(c)?),
-                            _ => ()
+                            _ => (),
                         }
                     }
-
-                },
-                _ => ()
+                }
+                _ => (),
             }
         }
 
