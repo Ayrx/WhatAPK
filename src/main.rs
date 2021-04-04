@@ -1,3 +1,4 @@
+use android_manifest::AndroidManifest;
 use anyhow::Result;
 use clap::{App, AppSettings, Arg};
 use serde::{Deserialize, Serialize};
@@ -38,18 +39,16 @@ fn main() -> Result<()> {
 
     let mut zip = ZipArchive::new(fr)?;
 
-    {
-        let mut resources_file = Vec::new();
-        let mut manifest_file = Vec::new();
+    let mut resources_file = Vec::new();
+    let mut manifest_file = Vec::new();
 
-        zip.by_name("resources.arsc")?
-            .read_to_end(&mut resources_file)?;
-        zip.by_name("AndroidManifest.xml")?
-            .read_to_end(&mut manifest_file)?;
+    zip.by_name("resources.arsc")?
+        .read_to_end(&mut resources_file)?;
+    zip.by_name("AndroidManifest.xml")?
+        .read_to_end(&mut manifest_file)?;
 
-        let manifest = android_manifest::AndroidManifest::parse(&resources_file, &manifest_file)?;
-        manifest.print();
-    }
+    let manifest = android_manifest::AndroidManifest::parse(&resources_file, &manifest_file)?;
+    manifest.print();
 
     let files: HashSet<String> = zip.file_names().map(|x| x.to_owned()).collect();
     let results = run_checks(files);
@@ -60,7 +59,13 @@ fn main() -> Result<()> {
 
     if let Some(o) = matches.value_of("OUTPUT") {
         let file = File::create(o)?;
-        serde_json::to_writer(file, &results)?;
+        serde_json::to_writer(
+            file,
+            &OutputWrapper {
+                apk_info: manifest,
+                results,
+            },
+        )?;
     }
 
     Ok(())
@@ -112,4 +117,10 @@ impl CheckResults {
             println!("{}", m);
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct OutputWrapper {
+    apk_info: AndroidManifest,
+    results: Vec<CheckResults>,
 }

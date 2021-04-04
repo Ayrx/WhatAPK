@@ -2,10 +2,11 @@ use abxml::{decoder::Decoder, model::Element};
 use anyhow::{anyhow, ensure, Result};
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AndroidManifest {
     pub package_name: String,
     pub permissions: Vec<Permission>,
@@ -173,7 +174,7 @@ impl AndroidManifest {
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Display, EnumString)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
 pub enum Permission {
     ACCEPT_HANDOVER,
     ACCESS_BACKGROUND_LOCATION,
