@@ -51,24 +51,25 @@ impl AndroidManifest {
         let mut providers = Vec::new();
 
         for child in root.get_children() {
-            let name = child.get_tag().get_name();
-            if name.as_str() == "uses-permission" {
-                if let Some(p) = Self::parse_permissions(child)? {
-                    permissions.push(p);
-                }
-            } else if name.as_str() == "application" {
-                for c in child.get_children() {
-                    let name = c.get_tag().get_name();
-                    if name.as_str() == "activity" {
-                        activities.push(Self::parse_activity(c)?);
-                    } else if name.as_str() == "service" {
-                        services.push(Self::parse_service(c)?);
-                    } else if name.as_str() == "receiver" {
-                        receivers.push(Self::parse_receiver(c)?);
-                    } else if name.as_str() == "provider" {
-                        providers.push(Self::parse_provider(c)?);
+            match child.get_tag().get_name().as_str() {
+                "uses-permission" => {
+                    if let Some(p) = Self::parse_permissions(child)? {
+                        permissions.push(p);
                     }
-                }
+                },
+                "application" => {
+                    for c in child.get_children() {
+                        match c.get_tag().get_name().as_str() {
+                            "activity" => activities.push(Self::parse_activity(c)?),
+                            "service" => services.push(Self::parse_service(c)?),
+                            "receiver" => receivers.push(Self::parse_receiver(c)?),
+                            "provider" => providers.push(Self::parse_provider(c)?),
+                            _ => ()
+                        }
+                    }
+
+                },
+                _ => ()
             }
         }
 
