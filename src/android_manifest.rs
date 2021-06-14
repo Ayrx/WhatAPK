@@ -1,8 +1,9 @@
-use abxml::{decoder::Decoder, model::Element};
 use anyhow::{anyhow, ensure, Result};
+use axmldecoder::{parse, Element, Node};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
@@ -18,16 +19,18 @@ pub struct AndroidManifest {
 }
 
 impl AndroidManifest {
-    pub fn parse(resources_file: &[u8], manifest_file: &[u8]) -> Result<Self> {
-        let decoder = Decoder::from_buffer(resources_file).map_err(|e| e.compat())?;
+    pub fn parse(manifest_file: &[u8]) -> Result<Self> {
+        let mut cur = Cursor::new(manifest_file);
+        let doc = parse(&mut cur)?;
 
-        let visitor = decoder
-            .xml_visitor(&manifest_file)
-            .map_err(|e| e.compat())?;
+        let root = doc.get_root().as_ref().unwrap();
+        let root = match root {
+            Node::Element(e) => e,
+            Node::Cdata(_) => unreachable!(),
+        };
 
-        let root = visitor.get_root().as_ref().unwrap();
         ensure!(
-            root.get_tag().get_name().as_str() == "manifest",
+            root.get_tag() == "manifest",
             "AndroidManifest: missing `manifest` tag"
         );
 
@@ -52,7 +55,12 @@ impl AndroidManifest {
         let mut providers = Vec::new();
 
         for child in root.get_children() {
-            match child.get_tag().get_name().as_str() {
+            let child = match child {
+                Node::Element(e) => e,
+                Node::Cdata(_) => continue,
+            };
+
+            match child.get_tag() {
                 "uses-permission" => {
                     if let Some(p) = Self::parse_permissions(child)? {
                         permissions.push(p);
@@ -60,7 +68,12 @@ impl AndroidManifest {
                 }
                 "application" => {
                     for c in child.get_children() {
-                        match c.get_tag().get_name().as_str() {
+                        let c = match c {
+                            Node::Element(e) => e,
+                            Node::Cdata(_) => continue,
+                        };
+
+                        match c.get_tag() {
                             "activity" => activities.push(Self::parse_activity(c)?),
                             "service" => services.push(Self::parse_service(c)?),
                             "receiver" => receivers.push(Self::parse_receiver(c)?),

@@ -39,15 +39,11 @@ fn main() -> Result<()> {
 
     let mut zip = ZipArchive::new(fr)?;
 
-    let mut resources_file = Vec::new();
     let mut manifest_file = Vec::new();
-
-    zip.by_name("resources.arsc")?
-        .read_to_end(&mut resources_file)?;
     zip.by_name("AndroidManifest.xml")?
         .read_to_end(&mut manifest_file)?;
 
-    let manifest = android_manifest::AndroidManifest::parse(&resources_file, &manifest_file)?;
+    let manifest = android_manifest::AndroidManifest::parse(&manifest_file)?;
     manifest.print();
 
     let files: HashSet<String> = zip.file_names().map(|x| x.to_owned()).collect();
