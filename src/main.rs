@@ -94,6 +94,9 @@ fn run_checks(files: HashSet<String>) -> Vec<CheckResults> {
         results.push(c);
     }
 
+    if let Some(c) = rules::xamarin::check(&files) {
+        results.push(c);
+    }
     results
 }
 
